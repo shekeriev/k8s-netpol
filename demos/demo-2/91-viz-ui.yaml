@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vizualizer-cm
+  namespace: vizualizer
+data:
+  status.list: "http://database.application:5000/status,http://backend.application:5000/status,http://frontend.application:5000/status,http://client.client:5000/status"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vizualizer-svc 
+  namespace: vizualizer
+spec:
+  type: NodePort
+  ports:
+  - port: 5000
+    targetPort: 5000
+    nodePort: 30001
+  selector:
+    role: vizualizer 
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vizualizer
+  namespace: vizualizer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      role: vizualizer
+  template:
+    metadata:
+      labels:
+        role: vizualizer
+    spec:
+      containers:
+      - name: vizualizer-ui 
+        image: shekeriev/viz-ui
+        imagePullPolicy: Always
+        env:
+        - name: CHECK_LIST
+          # value: "LIST:http://database.application:5000/status,http://backend.application:5000/status,http://frontend.application:5000/status,http://client.client:5000/status" 
+          value: "FILE:/config/status.list"
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        configMap:
+          name: vizualizer-cm

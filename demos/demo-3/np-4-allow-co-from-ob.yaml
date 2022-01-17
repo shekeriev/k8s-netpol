@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: access-co-from-ob
+  namespace: frontend
+spec:
+  podSelector:
+    matchLabels:
+      role: "consumer"
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: "observer"
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: "client"

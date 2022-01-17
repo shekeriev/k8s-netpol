@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: observer
+  namespace: client
+  labels:
+    role: observer
+spec:
+  containers:
+  - name: observer-cont
+    image: alpine
+    command: ["sleep", "1d"]
+  - name: vizualizer-cont
+    image: shekeriev/viz-ag
+    imagePullPolicy: Always
+    env:
+    - name: CHECK_NAME
+      value: "OB"
+    - name: CHECK_URL
+      value: "http://observer.client:9090"
+    - name: CHECK_INTERVAL
+      value: "15"
+    - name: CHECK_LIST
+      value: "http://producer.backend:9090,http://consumer.frontend:9090"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: observer
+  namespace: client
+spec:
+  ports:
+  - port: 9090
+    targetPort: 5000
+  selector:
+    role: observer

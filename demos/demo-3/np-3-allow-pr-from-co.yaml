@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: access-pr-from-co
+  namespace: backend
+spec:
+  podSelector:
+    matchLabels:
+      role: "producer"
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          role: "consumer"
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: "frontend"

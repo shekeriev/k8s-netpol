@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+  namespace: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels: 
+      app: fun-facts
+      role: consumer
+  minReadySeconds: 15
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: fun-facts
+        role: consumer
+    spec:
+      containers:
+      - name: consumer-cont
+        image: shekeriev/k8s-consumer:extra
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        env:
+        - name: FACTS_SERVER
+          value: "producer.backend"
+        - name: FACTS_PORT
+          value: "8080"
+      - name: vizualizer-cont
+        image: shekeriev/viz-ag
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+        - name: CHECK_NAME
+          value: "CO"
+        - name: CHECK_URL
+          value: "http://consumer.frontend:9090"
+        - name: CHECK_INTERVAL
+          value: "15"
+        - name: CHECK_LIST
+          value: "http://producer.backend:9090,http://observer.client:9090"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer
+  namespace: frontend
+  labels:
+    app: fun-facts
+    role: consumer
+spec:
+  type: NodePort
+  ports:
+  - name: "web"
+    port: 8080
+    nodePort: 30002
+    protocol: TCP
+    targetPort: 8080
+  - name: "viz"
+    port: 9090
+    targetPort: 5000
+  selector:
+    app: fun-facts
+    role: consumer
